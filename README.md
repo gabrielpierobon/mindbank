@@ -63,12 +63,12 @@ python app.py
 ```
 
 ### 5. Open Your Browser
-Navigate to `http://localhost:5000` to start using MindBank!
+Navigate to `http://localhost:5555` to start using MindBank!
 
 ## 💼 Usage Guide
 
 ### First-Time Setup
-1. **Launch the Application**: Open `http://localhost:5000` in your browser
+1. **Launch the Application**: Open `http://localhost:5555` in your browser
 2. **Configure Your Profile**: Click "Set Up Your Profile" to enter your financial information
 3. **Enter Monthly Salary**: Input your gross monthly salary in euros
 4. **Add Asset Information**: Enter your bank balance, cash amounts, and investment values

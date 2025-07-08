@@ -28,9 +28,16 @@ def load_config():
         save_config(default_config)
         return default_config
     except json.JSONDecodeError:
-        # Handle corrupted file
+        # Handle corrupted file - create backup and return default config
         backup_file(CONFIG_FILE)
-        return load_config()  # Recursive call after backup
+        default_config = {
+            'monthly_salary': 0,
+            'daily_goal_percentage': 0,
+            'created_at': datetime.now().isoformat(),
+            'updated_at': datetime.now().isoformat()
+        }
+        save_config(default_config)
+        return default_config
 
 def save_config(config):
     """Save user configuration to JSON file"""
@@ -65,9 +72,18 @@ def load_assets():
         save_assets(default_assets)
         return default_assets
     except json.JSONDecodeError:
-        # Handle corrupted file
+        # Handle corrupted file - create backup and return default assets
         backup_file(ASSETS_FILE)
-        return load_assets()  # Recursive call after backup
+        default_assets = {
+            'bank_balance': 0,
+            'cash_eur': 0,
+            'cash_usd': 0,
+            'investments': 0,
+            'created_at': datetime.now().isoformat(),
+            'updated_at': datetime.now().isoformat()
+        }
+        save_assets(default_assets)
+        return default_assets
 
 def save_assets(assets):
     """Save asset data to JSON file"""

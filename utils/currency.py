@@ -17,12 +17,12 @@ def get_exchange_rate():
     try:
         # Try to get from cache first
         cached_rate = get_cached_rate()
-        if cached_rate:
+        if cached_rate is not None:
             return cached_rate
         
         # Fetch from API if cache is stale or doesn't exist
         api_rate = fetch_rate_from_api()
-        if api_rate:
+        if api_rate is not None:
             cache_rate(api_rate)
             return api_rate
         
@@ -85,7 +85,7 @@ def fetch_rate_from_api():
         data = response.json()
         eur_rate = data['rates'].get('EUR')
         
-        if eur_rate and isinstance(eur_rate, (int, float)):
+        if eur_rate is not None and isinstance(eur_rate, (int, float)):
             return round(eur_rate, 4)
         
         return None
@@ -158,7 +158,7 @@ def refresh_exchange_rate():
         
         # Fetch new rate
         new_rate = fetch_rate_from_api()
-        if new_rate:
+        if new_rate is not None:
             cache_rate(new_rate)
             return new_rate
         
