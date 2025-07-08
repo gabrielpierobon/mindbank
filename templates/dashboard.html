@@ -1,0 +1,189 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - MindBank{% endblock %}
+
+{% block content %}
+<div class="dashboard">
+    {% if first_time %}
+    <!-- First time user welcome -->
+    <div class="welcome-card">
+        <h2>Welcome to MindBank!</h2>
+        <p>Let's get you started by configuring your financial information.</p>
+        <a href="{{ url_for('config') }}" class="btn btn-primary">Set Up Your Profile</a>
+    </div>
+    {% else %}
+    
+    <!-- Global Position Header -->
+    <div class="global-position-header">
+        <div class="position-card main-position">
+            <h2>Global Financial Position</h2>
+            <div class="position-amount" id="global-position">
+                €{{ "%.2f"|format(global_position) }}
+            </div>
+            <div class="position-subtitle">Total Assets + Realized + Potential Income</div>
+        </div>
+    </div>
+
+    <!-- Daily Goal Section -->
+    <div class="goal-section">
+        <div class="goal-card">
+            <h3>Today's Goal Completion</h3>
+            <div class="goal-controls">
+                <div class="goal-slider-container">
+                    <input type="range" 
+                           id="goal-slider" 
+                           class="goal-slider" 
+                           min="0" 
+                           max="100" 
+                           value="{{ config.daily_goal_percentage or 0 }}"
+                           step="1">
+                    <div class="slider-labels">
+                        <span>0%</span>
+                        <span class="goal-percentage" id="goal-percentage">{{ config.daily_goal_percentage or 0 }}%</span>
+                        <span>100%</span>
+                    </div>
+                </div>
+                <div class="goal-impact">
+                    <div class="impact-item">
+                        <span class="impact-label">Today's Potential:</span>
+                        <span class="impact-value" id="potential-income">€{{ "%.2f"|format(potential_income) }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Income Breakdown -->
+    <div class="income-section">
+        <h3>Income Overview</h3>
+        <div class="income-grid">
+            <div class="income-card realized">
+                <h4>Realized This Month</h4>
+                <div class="income-amount">€{{ "%.2f"|format(realized_income) }}</div>
+                <div class="income-subtitle">Based on days passed</div>
+            </div>
+            <div class="income-card potential">
+                <h4>Today's Potential</h4>
+                <div class="income-amount" id="potential-display">€{{ "%.2f"|format(potential_income) }}</div>
+                <div class="income-subtitle">Based on goal completion</div>
+            </div>
+            <div class="income-card monthly">
+                <h4>Monthly Salary</h4>
+                <div class="income-amount">€{{ "%.2f"|format(config.monthly_salary or 0) }}</div>
+                <div class="income-subtitle">Full month target</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Assets Breakdown -->
+    <div class="assets-section">
+        <h3>Assets Breakdown</h3>
+        <div class="assets-grid">
+            <div class="asset-card">
+                <div class="asset-header">
+                    <h4>Bank Account</h4>
+                    <span class="asset-currency">EUR</span>
+                </div>
+                <div class="asset-amount">€{{ "%.2f"|format(assets.bank_balance or 0) }}</div>
+            </div>
+            
+            <div class="asset-card">
+                <div class="asset-header">
+                    <h4>Cash (EUR)</h4>
+                    <span class="asset-currency">EUR</span>
+                </div>
+                <div class="asset-amount">€{{ "%.2f"|format(assets.cash_eur or 0) }}</div>
+            </div>
+            
+            <div class="asset-card">
+                <div class="asset-header">
+                    <h4>Cash (USD)</h4>
+                    <span class="asset-currency">USD</span>
+                </div>
+                <div class="asset-amount">
+                    ${{ "%.2f"|format(assets.cash_usd or 0) }}
+                    <div class="conversion-rate" id="usd-conversion">
+                        ≈ €{{ "%.2f"|format((assets.cash_usd or 0) * 0.85) }}
+                    </div>
+                </div>
+            </div>
+            
+            <div class="asset-card">
+                <div class="asset-header">
+                    <h4>Investments</h4>
+                    <span class="asset-currency">EUR</span>
+                </div>
+                <div class="asset-amount">€{{ "%.2f"|format(assets.investments or 0) }}</div>
+            </div>
+        </div>
+        
+        <div class="assets-total">
+            <div class="total-card">
+                <h4>Total Assets</h4>
+                <div class="total-amount" id="total-assets">
+                    €{{ "%.2f"|format((assets.bank_balance or 0) + (assets.cash_eur or 0) + ((assets.cash_usd or 0) * 0.85) + (assets.investments or 0)) }}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Monthly Progress -->
+    <div class="progress-section">
+        <h3>Monthly Progress</h3>
+        <div class="progress-card">
+            <div class="progress-info">
+                <div class="progress-date">
+                    <span class="current-date" id="current-date"></span>
+                </div>
+                <div class="progress-stats">
+                    <div class="stat-item">
+                        <span class="stat-label">Days Passed:</span>
+                        <span class="stat-value" id="days-passed"></span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Days Remaining:</span>
+                        <span class="stat-value" id="days-remaining"></span>
+                    </div>
+                </div>
+            </div>
+            <div class="progress-bar-container">
+                <div class="progress-bar">
+                    <div class="progress-fill" id="month-progress"></div>
+                </div>
+                <div class="progress-percentage" id="month-percentage"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="actions-section">
+        <h3>Quick Actions</h3>
+        <div class="actions-grid">
+            <a href="{{ url_for('config') }}" class="action-card">
+                <div class="action-icon">⚙️</div>
+                <div class="action-title">Update Settings</div>
+                <div class="action-description">Modify salary and asset values</div>
+            </a>
+            
+            <button class="action-card" id="refresh-data">
+                <div class="action-icon">🔄</div>
+                <div class="action-title">Refresh Data</div>
+                <div class="action-description">Update exchange rates and calculations</div>
+            </button>
+        </div>
+    </div>
+    
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Dashboard-specific JavaScript initialization
+document.addEventListener('DOMContentLoaded', function() {
+    if (window.mindBankApp) {
+        window.mindBankApp.initializeDashboard();
+    }
+});
+</script>
+{% endblock %} 

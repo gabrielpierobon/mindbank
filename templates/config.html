@@ -1,0 +1,196 @@
+{% extends "base.html" %}
+
+{% block title %}Settings - MindBank{% endblock %}
+
+{% block content %}
+<div class="config">
+    <div class="config-header">
+        <h2>Financial Configuration</h2>
+        <p>Set up your salary and asset information to track your financial position accurately.</p>
+    </div>
+
+    <!-- Configuration Forms -->
+    <div class="config-sections">
+        
+        <!-- Income Configuration -->
+        <div class="config-section">
+            <div class="section-card">
+                <h3>💰 Income Settings</h3>
+                <form id="income-form" class="config-form">
+                    <div class="form-group">
+                        <label for="monthly-salary">Monthly Salary (EUR)</label>
+                        <input type="number" 
+                               id="monthly-salary" 
+                               name="monthly_salary" 
+                               value="{{ config.monthly_salary or '' }}" 
+                               min="0" 
+                               step="0.01" 
+                               placeholder="Enter your monthly salary"
+                               required>
+                        <div class="form-help">Your gross monthly salary in euros</div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="goal-percentage">Current Daily Goal (%)</label>
+                        <div class="slider-input-group">
+                            <input type="range" 
+                                   id="goal-percentage-slider" 
+                                   name="daily_goal_percentage" 
+                                   value="{{ config.daily_goal_percentage or 0 }}" 
+                                   min="0" 
+                                   max="100" 
+                                   step="1">
+                            <input type="number" 
+                                   id="goal-percentage-input" 
+                                   name="daily_goal_percentage_input" 
+                                   value="{{ config.daily_goal_percentage or 0 }}" 
+                                   min="0" 
+                                   max="100" 
+                                   step="1">
+                            <span class="input-suffix">%</span>
+                        </div>
+                        <div class="form-help">How much of today's goals have you completed?</div>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary">Save Income Settings</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Assets Configuration -->
+        <div class="config-section">
+            <div class="section-card">
+                <h3>🏦 Asset Information</h3>
+                <form id="assets-form" class="config-form">
+                    <div class="form-group">
+                        <label for="bank-balance">Bank Account Balance (EUR)</label>
+                        <input type="number" 
+                               id="bank-balance" 
+                               name="bank_balance" 
+                               value="{{ assets.bank_balance or '' }}" 
+                               min="0" 
+                               step="0.01" 
+                               placeholder="Enter your bank balance">
+                        <div class="form-help">Current balance in your main bank account</div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="cash-eur">Physical Cash - EUR</label>
+                        <input type="number" 
+                               id="cash-eur" 
+                               name="cash_eur" 
+                               value="{{ assets.cash_eur or '' }}" 
+                               min="0" 
+                               step="0.01" 
+                               placeholder="Cash in euros">
+                        <div class="form-help">Physical cash you have in euros</div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="cash-usd">Physical Cash - USD</label>
+                        <input type="number" 
+                               id="cash-usd" 
+                               name="cash_usd" 
+                               value="{{ assets.cash_usd or '' }}" 
+                               min="0" 
+                               step="0.01" 
+                               placeholder="Cash in US dollars">
+                        <div class="form-help">Physical cash you have in US dollars (will be converted to EUR)</div>
+                        <div class="conversion-info" id="usd-conversion-info">
+                            Current rate: $1 = €0.85 (approximate)
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="investments">Investment Portfolio Value (EUR)</label>
+                        <input type="number" 
+                               id="investments" 
+                               name="investments" 
+                               value="{{ assets.investments or '' }}" 
+                               min="0" 
+                               step="0.01" 
+                               placeholder="Total investment value">
+                        <div class="form-help">Current market value of your investments, stocks, bonds, etc.</div>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary">Save Asset Information</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Summary & Preview -->
+        <div class="config-section">
+            <div class="section-card summary-card">
+                <h3>📊 Financial Summary</h3>
+                <div class="summary-content">
+                    <div class="summary-grid">
+                        <div class="summary-item">
+                            <div class="summary-label">Monthly Salary</div>
+                            <div class="summary-value" id="summary-salary">€{{ "%.2f"|format(config.monthly_salary or 0) }}</div>
+                        </div>
+                        
+                        <div class="summary-item">
+                            <div class="summary-label">Total Assets</div>
+                            <div class="summary-value" id="summary-assets">
+                                €{{ "%.2f"|format((assets.bank_balance or 0) + (assets.cash_eur or 0) + ((assets.cash_usd or 0) * 0.85) + (assets.investments or 0)) }}
+                            </div>
+                        </div>
+                        
+                        <div class="summary-item">
+                            <div class="summary-label">Daily Income Potential</div>
+                            <div class="summary-value" id="summary-daily">
+                                €{{ "%.2f"|format((config.monthly_salary or 0) / 30) }}
+                            </div>
+                        </div>
+                        
+                        <div class="summary-item">
+                            <div class="summary-label">Current Goal</div>
+                            <div class="summary-value" id="summary-goal">{{ config.daily_goal_percentage or 0 }}%</div>
+                        </div>
+                    </div>
+                    
+                    <div class="summary-actions">
+                        <a href="{{ url_for('dashboard') }}" class="btn btn-success">View Dashboard</a>
+                        <button id="refresh-exchange-rate" class="btn btn-secondary">Update Exchange Rate</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Exchange Rate Information -->
+    <div class="exchange-rate-info">
+        <div class="rate-card">
+            <h4>💱 Exchange Rate Information</h4>
+            <div class="rate-details" id="rate-details">
+                <div class="rate-item">
+                    <span class="rate-label">USD to EUR:</span>
+                    <span class="rate-value" id="current-rate">Loading...</span>
+                </div>
+                <div class="rate-item">
+                    <span class="rate-label">Last Updated:</span>
+                    <span class="rate-value" id="rate-timestamp">Loading...</span>
+                </div>
+                <div class="rate-item">
+                    <span class="rate-label">Source:</span>
+                    <span class="rate-value" id="rate-source">Loading...</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Form Validation Messages -->
+    <div id="form-messages" class="form-messages"></div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Configuration-specific JavaScript initialization
+document.addEventListener('DOMContentLoaded', function() {
+    if (window.mindBankApp) {
+        window.mindBankApp.initializeConfig();
+    }
+});
+</script>
+{% endblock %} 
